@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plant Disease Detection Chatbot</title>
+<style>
+    /* CSS for styling the chatbot and form */
+    .chat-container {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin: 0 auto;
+        max-width: 600px;
+        background-color: #f4f4f4;
+    }
+    .chat-container .chat-box {
+        margin-bottom: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .user-message {
+        background-color: #f1f1f1;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 10px 0;
+    }
+    .bot-message {
+        background-color: #4CAF50;
+        color: white;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 10px 0;
+    }
+    input[type="text"], input[type="file"] {
+        width: 80%;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+    button {
+        padding: 10px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #218838;
+    }
+</style>
+</head>
+<body>
+<div class="chat-container">
+    <div class="chat-box" id="chat-box"></div>
+    <input type="text" id="user-input" placeholder="Type plant name here..." />
+    <button onclick="sendMessage()">Get Plant Info</button>
+    
+    <br><br>
+    <input type="file" id="plant-image" accept="image/*" />
+    <button onclick="uploadImage()">Upload Image & Detect Disease</button>
+</div>
+
+<script>
+function sendMessage() {
+    var userInput = document.getElementById("user-input").value;
+    var chatBox = document.getElementById("chat-box");
+
+    // Display user message
+    var userMessage = '<div class="user-message">' + userInput + '</div>';
+    chatBox.innerHTML += userMessage;
+
+    // Extract key terms from user input (plant name)
+    var searchTerm = extractKeyTerms(userInput);
+
+    // Fetch plant information from Wikipedia or custom API
+    fetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(searchTerm))
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Check if Wikipedia page exists
+        if (data.type === "disambiguation" || data.title === "Not found.") {
+            throw new Error("Page not found");
+        }
+        // Display bot response
+        var botMessage = '<div class="bot-message">' + data.extract + '</div>';
+        chatBox.innerHTML += botMessage;
+    })
+    .catch(error => {
+        // Display error message if there's an issue fetching data or page not found
+        var errorMessage = '<div class="bot-message">Sorry, I couldn\'t find any information about this plant.</div>';
+        chatBox.innerHTML += errorMessage;
+    });
+
+    // Clear user input
+    document.getElementById("user-input").value = "";
+}
+
+function extractKeyTerms(input) {
+    // Simple keyword extraction - remove question words and punctuation
+    var cleanedInput = input.toLowerCase().replace(/[^\w\s]/gi, '');
+    var keyTerms = cleanedInput.split(" ").filter(term => !["who", "is", "what", "where", "when", "why", "how"].includes(term));
+    return keyTerms.join(" ");
+}
+
+function uploadImage() {
+    var plantImage = document.getElementById('plant-image').files[0];
+    var chatBox = document.getElementById("chat-box");
+
+    if (!plantImage) {
+        chatBox.innerHTML += '<div class="bot-message">Please upload an image of the plant.</div>';
+        return;
+    }
+
+    // For backend integration: Use FormData to send image to server for processing
+    var formData = new FormData();
+    formData.append('image', plantImage);
+
+    // Simulate a response (replace this with actual backend processing)
+    setTimeout(() => {
+        chatBox.innerHTML += '<div class="bot-message">Plant detected: Rose<br>Disease detected: Black Spot Disease</div>';
+    }, 2000);
+    
+    // Clear file input after upload
+    document.getElementById("plant-image").value = "";
+}
+</script>
+</body>
+</html>
